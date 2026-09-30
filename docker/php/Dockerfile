@@ -1,6 +1,6 @@
 FROM php:8.5-fpm
 
-# Встановлення залежностей
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     curl \
     wget \
@@ -45,11 +45,11 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-enable redis imagick \
     && rm -rf /var/lib/apt/lists/*
 
-# Встановлення Composer
+# Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- \
     --install-dir=/usr/local/bin --filename=composer
 
-# Додаємо кастомний php.ini
+# Copy the custom PHP configuration
 COPY php.ini /usr/local/etc/php/conf.d/40-custom.ini
 
 WORKDIR /var/www
