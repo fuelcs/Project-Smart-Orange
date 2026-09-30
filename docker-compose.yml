@@ -1,0 +1,73 @@
+name: smart-orange
+
+services:
+    nginx:
+        image: nginx:latest
+        container_name: smart-orange-nginx
+        ports:
+            - "20000:80"
+        volumes:
+            - ./docker/nginx:/etc/nginx/conf.d
+            - ./:/var/www
+            - ./docker/logs:/var/log/nginx
+        networks:
+            - smart-orange-network
+        depends_on:
+            - php
+
+    php:
+        depends_on:
+            mysql:
+                condition: service_healthy
+        build: ./docker/php
+        container_name: smart-orange-php
+        volumes:
+            - ./:/var/www
+        restart: unless-stopped
+        networks:
+            - smart-orange-network
+
+    phpmyadmin:
+        depends_on:
+            mysql:
+                condition: service_healthy
+        image: phpmyadmin/phpmyadmin
+        container_name: smart-orange-phpmyadmin
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            PMA_ARBITRARY: 1
+            UPLOAD_LIMIT: 256000000
+        restart: unless-stopped
+        ports:
+            - "30010:80"
+        networks:
+            - smart-orange-network
+
+    mysql:
+        image: mysql:8
+        healthcheck:
+            test: ["CMD-SHELL", 'MYSQL_PWD="$$MYSQL_PASSWORD" mysql --host=127.0.0.1 --user="$$MYSQL_USER" --database="$$MYSQL_DATABASE" --execute="SELECT 1"']
+            interval: 5s
+            timeout: 5s
+            retries: 20
+            start_period: 30s
+        container_name: smart-orange-mysql
+        restart: unless-stopped
+        volumes:
+            - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+            - mysql_data:/var/lib/mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_USER: admin
+            MYSQL_PASSWORD: admin
+            MYSQL_DATABASE: smart_orange
+        networks:
+            - smart-orange-network
+
+networks:
+    smart-orange-network:
+        driver: bridge
+
+volumes:
+    mysql_data:
