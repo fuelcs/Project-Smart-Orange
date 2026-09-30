@@ -52,6 +52,12 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
 # Copy the custom PHP configuration
 COPY php.ini /usr/local/etc/php/conf.d/40-custom.ini
 
+# Install the queue process manager
+RUN apt-get update && apt-get install -y --no-install-recommends supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY supervisord.conf /etc/supervisor/supervisord.conf
+
 WORKDIR /var/www
 
 CMD ["php-fpm"]
